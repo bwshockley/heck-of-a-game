@@ -36,7 +36,11 @@ const elements = {
 
 const params = new URLSearchParams(location.search);
 if (params.get("room")) {
-  elements.roomCode.value = params.get("room").toUpperCase();
+  elements.roomCode.value = normalizeRoomCode(params.get("room"));
+}
+
+function normalizeRoomCode(code) {
+  return String(code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
 }
 
 function escapeHtml(value) {
@@ -312,6 +316,7 @@ elements.createForm.addEventListener("submit", async event => {
 elements.joinForm.addEventListener("submit", async event => {
   event.preventDefault();
   try {
+    elements.roomCode.value = normalizeRoomCode(elements.roomCode.value);
     const snapshot = await request("/api/join", {
       name: elements.joinName.value,
       code: elements.roomCode.value
@@ -342,5 +347,5 @@ elements.startGame.addEventListener("click", () => act("start"));
 elements.resetGame.addEventListener("click", () => act("reset"));
 
 elements.roomCode.addEventListener("input", () => {
-  elements.roomCode.value = elements.roomCode.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  elements.roomCode.value = normalizeRoomCode(elements.roomCode.value);
 });

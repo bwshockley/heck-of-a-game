@@ -5,6 +5,8 @@ const crypto = require("crypto");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, ".data");
+const ROOMS_FILE = path.join(DATA_DIR, "rooms.json");
 const HEARTBEAT_MS = 25000;
 const ROOM_TTL_MS = 1000 * 60 * 60 * 8;
 const MAX_PLAYERS = 8;
@@ -52,6 +54,49 @@ function makeRoomCode() {
     }
   } while (rooms.has(code));
   return code;
+}
+
+function normalizeRoomCode(code) {
+  return String(code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function serializeRoom(room) {
+  return {
+    ...room,
+    clients: undefined,
+    players: room.players.map(player => ({
+      ...player,
+      connected: false
+    }))
+  };
+}
+
+function saveRooms() {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(ROOMS_FILE, JSON.stringify([...rooms.values()].map(serializeRoom), null, 2));
+  } catch (error) {
+    console.warn(`Unable to save rooms: ${error.message}`);
+  }
+}
+
+function loadRooms() {
+  try {
+    if (!fs.existsSync(ROOMS_FILE)) return;
+    const savedRooms = JSON.parse(fs.readFileSync(ROOMS_FILE, "utf8"));
+    if (!Array.isArray(savedRooms)) return;
+
+    for (const savedRoom of savedRooms) {
+      if (!savedRoom || !savedRoom.code || !Array.isArray(savedRoom.players)) continue;
+      rooms.set(savedRoom.code, {
+        ...savedRoom,
+        players: savedRoom.players.map(player => ({ ...player, connected: false })),
+        clients: new Map()
+      });
+    }
+  } catch (error) {
+    console.warn(`Unable to load rooms: ${error.message}`);
+  }
 }
 
 function makeDeck() {
@@ -164,11 +209,13 @@ function createRoom(name) {
     log: [`${host.name} created Heck of a Game room ${code}.`]
   };
   rooms.set(code, room);
+  saveRooms();
   return { room, player: host };
 }
 
 function touch(room) {
   room.updatedAt = Date.now();
+  saveRooms();
 }
 
 function publicRoom(room) {
@@ -221,7 +268,7 @@ function playerView(room, playerId) {
 }
 
 function findRoom(code) {
-  return rooms.get(String(code || "").trim().toUpperCase());
+  return rooms.get(normalizeRoomCode(code));
 }
 
 function findPlayer(room, playerId) {
@@ -239,11 +286,14 @@ function getCurrentPlayer(room) {
 
 function removeExpiredRooms() {
   const now = Date.now();
+  let changed = false;
   for (const [code, room] of rooms) {
     if (now - room.updatedAt > ROOM_TTL_MS && room.clients.size === 0) {
       rooms.delete(code);
+      changed = true;
     }
   }
+  if (changed) saveRooms();
 }
 
 function broadcast(room) {
@@ -480,7 +530,7 @@ async function handleApi(req, res) {
       return;
     }
 
-    const match = req.url.match(/^\/api\/rooms\/([A-Z0-9]+)\/actions$/);
+    const match = req.url.match(/^\/api\/rooms\/([^/]+)\/actions$/);
     if (req.method === "POST" && match) {
       const body = await readBody(req);
       const room = findRoom(match[1]);
@@ -593,6 +643,8 @@ function handleEvents(req, res) {
     broadcast(room);
   });
 }
+
+loadRooms();
 
 const server = http.createServer((req, res) => {
   removeExpiredRooms();
