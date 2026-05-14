@@ -82,6 +82,18 @@ function connectEvents() {
     state.snapshot = JSON.parse(event.data);
     render();
   });
+  state.source.addEventListener("removed", event => {
+    const data = JSON.parse(event.data);
+    state.source.close();
+    state.snapshot = null;
+    state.roomCode = "";
+    state.playerId = "";
+    localStorage.removeItem("heck.roomCode");
+    localStorage.removeItem("heck.playerId");
+    elements.game.classList.add("hidden");
+    elements.welcome.classList.remove("hidden");
+    toast(data.message || "You were removed from the table.");
+  });
   state.source.onerror = () => {
     toast("Connection paused. Reconnecting...");
   };
@@ -178,6 +190,7 @@ function renderTrump(room) {
 function renderPlayers(room) {
   elements.players.innerHTML = "";
   const current = currentPlayer(room);
+  const hostCanRemove = isHost() && room.phase === "lobby";
   for (const player of room.players) {
     const node = document.createElement("div");
     const winner = room.winnerIds && room.winnerIds.includes(player.id);
@@ -191,6 +204,18 @@ function renderPlayers(room) {
       <span class="${player.connected ? "connected" : "offline"}">${player.connected ? "Connected" : "Away"} · ${player.cardCount} cards</span>
       <span>${bid} · Tricks ${player.tricksTaken} · Round ${player.roundScore} · Total ${player.totalScore}</span>
     `;
+    if (hostCanRemove && player.id !== state.playerId) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "danger small";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
+        if (confirm(`Remove ${player.name} from this table?`)) {
+          act("removePlayer", { targetPlayerId: player.id });
+        }
+      });
+      node.append(removeButton);
+    }
     elements.players.append(node);
   }
 }

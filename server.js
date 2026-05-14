@@ -432,6 +432,30 @@ function resetGame(room) {
   room.log.push("The game was reset.");
 }
 
+function disconnectPlayerClients(room, targetPlayerId, eventName, payload) {
+  for (const [clientId, client] of room.clients) {
+    if (client.playerId !== targetPlayerId) continue;
+    client.res.write(`event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`);
+    client.res.end();
+    room.clients.delete(clientId);
+  }
+}
+
+function removePlayer(room, host, targetPlayerId) {
+  if (host.id !== room.hostId) throw new Error("Only the host can remove players");
+  if (room.phase !== "lobby") throw new Error("Players can only be removed before the game starts");
+  if (targetPlayerId === room.hostId) throw new Error("The host cannot be removed");
+
+  const index = playerIndex(room, targetPlayerId);
+  if (index === -1) throw new Error("Player not found");
+
+  const [removed] = room.players.splice(index, 1);
+  room.log.push(`${removed.name} was removed from the table.`);
+  disconnectPlayerClients(room, targetPlayerId, "removed", {
+    message: "The host removed you from the table."
+  });
+}
+
 async function handleApi(req, res) {
   try {
     if (req.method === "POST" && req.url === "/api/rooms") {
@@ -488,6 +512,8 @@ async function handleApi(req, res) {
       } else if (body.action === "reset") {
         if (!isHost) return sendJson(res, 403, { error: "Only the host can reset" });
         resetGame(room);
+      } else if (body.action === "removePlayer") {
+        removePlayer(room, player, body.targetPlayerId);
       } else {
         return sendJson(res, 400, { error: "Unknown action" });
       }

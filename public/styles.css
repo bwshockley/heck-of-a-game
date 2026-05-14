@@ -57,6 +57,18 @@ button.secondary {
   box-shadow: none;
 }
 
+button.danger {
+  background: #f8e7e9;
+  color: #a62f3a;
+  box-shadow: none;
+}
+
+button.small {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
 input {
   width: 100%;
   min-height: 46px;

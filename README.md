@@ -9,6 +9,7 @@ npm start
 ```
 
 Open the printed local URL, create a room, and share the room code or invite link with the other players.
+Before the first deal, the host can remove players from the lobby.
 
 ## Current Rules
 
