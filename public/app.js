@@ -194,7 +194,8 @@ function renderTrump(room) {
 function renderPlayers(room) {
   elements.players.innerHTML = "";
   const current = currentPlayer(room);
-  const hostCanRemove = isHost() && room.phase === "lobby";
+  const hostCanRemove = isHost();
+  const removalRestartsRound = room.phase === "bidding" || room.phase === "playing";
   for (const player of room.players) {
     const node = document.createElement("div");
     const winner = room.winnerIds && room.winnerIds.includes(player.id);
@@ -214,7 +215,10 @@ function renderPlayers(room) {
       removeButton.className = "danger small";
       removeButton.textContent = "Remove";
       removeButton.addEventListener("click", () => {
-        if (confirm(`Remove ${player.name} from this table?`)) {
+        const message = removalRestartsRound
+          ? `Remove ${player.name} from this table? The current round will restart for the remaining players.`
+          : `Remove ${player.name} from this table?`;
+        if (confirm(message)) {
           act("removePlayer", { targetPlayerId: player.id });
         }
       });

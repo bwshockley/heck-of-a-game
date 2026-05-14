@@ -9,7 +9,7 @@ npm start
 ```
 
 Open the printed local URL, create a room, and share the room code or invite link with the other players.
-Before the first deal, the host can remove players from the lobby.
+The host can remove players from the table at any time. Removing a player during bidding or play restarts the current round for the remaining players.
 
 ## Current Rules
 

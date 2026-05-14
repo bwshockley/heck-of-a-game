@@ -170,6 +170,14 @@ function leftOf(room, index) {
   return (index + 1) % room.players.length;
 }
 
+function clampTurn(room) {
+  if (!room.players.length) {
+    room.currentTurn = 0;
+    return;
+  }
+  room.currentTurn = Math.min(Math.max(room.currentTurn, 0), room.players.length - 1);
+}
+
 function createPlayer(name) {
   return {
     id: crypto.randomUUID(),
@@ -482,6 +490,50 @@ function resetGame(room) {
   room.log.push("The game was reset.");
 }
 
+function restartRoundAfterRemoval(room, removedName) {
+  if (room.players.length < 2) {
+    resetGame(room);
+    room.log.push(`Round canceled because ${removedName} was removed.`);
+    return;
+  }
+
+  clampTurn(room);
+  room.dealerIndex = Math.min(room.dealerIndex, room.players.length - 1);
+  room.phase = "bidding";
+  room.winnerIds = [];
+  dealRound(room);
+  room.currentTurn = leftOf(room, room.dealerIndex);
+  const dealer = room.players[room.dealerIndex];
+  const bidder = getCurrentPlayer(room);
+  room.log.push(
+    `Round ${room.round} restarted after ${removedName} was removed. ${dealer.name} dealt ${room.handSize} cards each. ${room.trumpCard.suitName} is trump. ${bidder.name} bids first.`
+  );
+}
+
+function adjustGameAfterRemoval(room, removed, removedIndex) {
+  const betweenRounds = room.phase === "roundOver" || room.phase === "gameOver";
+  if (betweenRounds && room.dealerIndex === removedIndex && room.players.length) {
+    room.dealerIndex = (removedIndex - 1 + room.players.length) % room.players.length;
+  } else if (room.dealerIndex > removedIndex) {
+    room.dealerIndex -= 1;
+  }
+  if (room.currentTurn > removedIndex) room.currentTurn -= 1;
+  clampTurn(room);
+
+  if (room.phase === "bidding" || room.phase === "playing") {
+    restartRoundAfterRemoval(room, removed.name);
+    return;
+  }
+
+  if (room.phase === "roundOver" || room.phase === "gameOver") {
+    room.winnerIds = room.winnerIds.filter(id => id !== removed.id);
+    if (room.players.length < 2) {
+      resetGame(room);
+      room.log.push(`Game returned to the lobby because ${removed.name} was removed.`);
+    }
+  }
+}
+
 function disconnectPlayerClients(room, targetPlayerId, eventName, payload) {
   for (const [clientId, client] of room.clients) {
     if (client.playerId !== targetPlayerId) continue;
@@ -493,13 +545,13 @@ function disconnectPlayerClients(room, targetPlayerId, eventName, payload) {
 
 function removePlayer(room, host, targetPlayerId) {
   if (host.id !== room.hostId) throw new Error("Only the host can remove players");
-  if (room.phase !== "lobby") throw new Error("Players can only be removed before the game starts");
   if (targetPlayerId === room.hostId) throw new Error("The host cannot be removed");
 
   const index = playerIndex(room, targetPlayerId);
   if (index === -1) throw new Error("Player not found");
 
   const [removed] = room.players.splice(index, 1);
+  adjustGameAfterRemoval(room, removed, index);
   room.log.push(`${removed.name} was removed from the table.`);
   disconnectPlayerClients(room, targetPlayerId, "removed", {
     message: "The host removed you from the table."
