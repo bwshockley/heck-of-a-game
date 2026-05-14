@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Heck of a Game</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="welcome" class="welcome">
+        <div class="brand">
+          <div class="deck-mark" aria-hidden="true">
+            <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
+          </div>
+          <h1>Heck of a Game</h1>
+          <p>No accounts. A trick-taking card game with bidding, trump, and one shared 52-card deck.</p>
+        </div>
+
+        <form id="createForm" class="panel">
+          <h2>Host a Table</h2>
+          <label>
+            Your name
+            <input id="hostName" autocomplete="name" maxlength="24" placeholder="Dealer">
+          </label>
+          <button type="submit">Create Room</button>
+        </form>
+
+        <form id="joinForm" class="panel">
+          <h2>Join a Table</h2>
+          <label>
+            Your name
+            <input id="joinName" autocomplete="name" maxlength="24" placeholder="Player">
+          </label>
+          <label>
+            Room code
+            <input id="roomCode" maxlength="5" placeholder="A7Q9K" autocapitalize="characters">
+          </label>
+          <button type="submit">Join Room</button>
+        </form>
+      </section>
+
+      <section id="game" class="game hidden" aria-live="polite">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Room</p>
+            <h1 id="roomTitle">-----</h1>
+          </div>
+          <button id="copyLink" type="button" class="secondary">Copy Link</button>
+        </header>
+
+        <section class="status-strip">
+          <div>
+            <span id="turnLabel">Waiting</span>
+            <strong id="turnName">for players</strong>
+          </div>
+          <div>
+            <span>Trump</span>
+            <strong id="trumpSuit">--</strong>
+          </div>
+          <div>
+            <span>Players</span>
+            <strong id="playerCount">1</strong>
+          </div>
+        </section>
+
+        <section class="table-zone">
+          <div class="table-header">
+            <h2>Table</h2>
+            <p id="tableHint">Start when everyone is in.</p>
+          </div>
+          <div id="trumpCard" class="trump-card"></div>
+          <div id="tableCards" class="table-cards"></div>
+        </section>
+
+        <section class="players-zone">
+          <h2>Players</h2>
+          <div id="players" class="players"></div>
+        </section>
+
+        <section class="hand-zone">
+          <div class="hand-header">
+            <h2>Your Hand</h2>
+            <div class="actions">
+              <button id="startGame" type="button">Deal</button>
+              <button id="resetGame" type="button" class="secondary">Reset</button>
+            </div>
+          </div>
+          <form id="bidForm" class="bid-form hidden">
+            <label>
+              Your bid
+              <input id="bidAmount" type="number" min="0" inputmode="numeric" value="0">
+            </label>
+            <button type="submit">Bid</button>
+          </form>
+          <div id="hand" class="hand"></div>
+        </section>
+
+        <section class="log-zone">
+          <h2>Table Log</h2>
+          <ol id="log"></ol>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>

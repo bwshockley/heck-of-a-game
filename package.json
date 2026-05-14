@@ -1,0 +1,13 @@
+{
+  "name": "heck-of-a-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "No-login multiplayer trick-taking cellphone card game using a standard 52-card deck.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,541 @@
+:root {
+  color-scheme: light;
+  --ink: #1e2329;
+  --muted: #62707d;
+  --line: #d9e0e5;
+  --paper: #fbfaf7;
+  --surface: #ffffff;
+  --felt: #0f766e;
+  --felt-dark: #115e59;
+  --gold: #d89b2b;
+  --red: #c73e4a;
+  --shadow: 0 18px 50px rgba(22, 31, 39, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.18), transparent 34%),
+    linear-gradient(315deg, rgba(216, 155, 43, 0.18), transparent 32%),
+    var(--paper);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  background: var(--felt);
+  color: white;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(15, 118, 110, 0.22);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+button.secondary {
+  background: #edf3f2;
+  color: var(--felt-dark);
+  box-shadow: none;
+}
+
+input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 13px;
+  background: white;
+  color: var(--ink);
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--felt);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.app-shell {
+  width: min(1120px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.hidden {
+  display: none !important;
+}
+
+.welcome {
+  min-height: calc(100vh - 42px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  align-content: center;
+}
+
+.brand {
+  align-self: stretch;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 8px;
+  padding: clamp(28px, 6vw, 70px);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.18), transparent 26%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 9px),
+    linear-gradient(135deg, #0f766e, #134e4a);
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.deck-mark {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.deck-mark span {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  background: white;
+  color: var(--ink);
+  font-size: 24px;
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.16);
+}
+
+.deck-mark span:nth-child(2),
+.deck-mark span:nth-child(3) {
+  color: var(--red);
+}
+
+.brand h1 {
+  max-width: 10ch;
+  margin: 0;
+  font-size: clamp(3.2rem, 9vw, 6.6rem);
+  line-height: 0.9;
+}
+
+.brand p {
+  max-width: 540px;
+  margin: 24px 0 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  line-height: 1.45;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-self: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.panel + .panel {
+  align-self: center;
+}
+
+.panel h2,
+.table-zone h2,
+.players-zone h2,
+.hand-zone h2,
+.log-zone h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.game {
+  display: grid;
+  gap: 14px;
+}
+
+.topbar,
+.status-strip,
+.table-zone,
+.players-zone,
+.hand-zone,
+.log-zone {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 32px rgba(22, 31, 39, 0.08);
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0;
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: 1fr 0.45fr 0.45fr;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.status-strip > div {
+  display: grid;
+  gap: 4px;
+  padding: 15px;
+  background: white;
+}
+
+.status-strip span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status-strip strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.1rem;
+}
+
+.table-zone {
+  min-height: 250px;
+  padding: 16px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 8px),
+    var(--felt);
+  color: white;
+}
+
+.table-header,
+.hand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.table-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+}
+
+.table-cards {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 178px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.trump-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.trump-card .card {
+  width: 60px;
+  text-transform: none;
+}
+
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 78px;
+  aspect-ratio: 5 / 7;
+  border: 1px solid rgba(30, 35, 41, 0.18);
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  align-content: space-between;
+  background: #fffdf8;
+  color: var(--ink);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+  user-select: none;
+}
+
+.card.red {
+  color: var(--red);
+}
+
+.card .rank {
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.card .suit {
+  place-self: center;
+  font-size: 2rem;
+}
+
+.card .played-by {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.players-zone,
+.hand-zone,
+.log-zone {
+  padding: 16px;
+}
+
+.players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.player-chip {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+}
+
+.player-chip.current {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 2px rgba(216, 155, 43, 0.22);
+}
+
+.player-chip.winner {
+  border-color: var(--felt);
+  background: #ecf8f4;
+}
+
+.player-chip strong {
+  overflow-wrap: anywhere;
+}
+
+.player-chip span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.connected::before,
+.offline::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 99px;
+  background: #18a058;
+}
+
+.offline::before {
+  background: #a5adb5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bid-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(216, 155, 43, 0.45);
+  border-radius: 8px;
+  background: #fff8e8;
+}
+
+.hand {
+  display: flex;
+  gap: 10px;
+  min-height: 128px;
+  margin-top: 14px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+}
+
+.hand .card {
+  width: 86px;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.hand .card:enabled,
+.hand .card.playable {
+  border-color: rgba(15, 118, 110, 0.55);
+}
+
+.hand .card.playable:active {
+  transform: translateY(-5px);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 110px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.log-zone ol {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(20px);
+  max-width: calc(100vw - 24px);
+  border-radius: 8px;
+  padding: 11px 14px;
+  background: var(--ink);
+  color: white;
+  font-weight: 750;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 780px) {
+  .welcome {
+    grid-template-columns: 1fr;
+    align-content: start;
+  }
+
+  .brand {
+    min-height: 360px;
+  }
+
+  .status-strip {
+    grid-template-columns: 1fr 0.5fr;
+  }
+
+  .status-strip > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .table-header,
+  .hand-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .actions button {
+    flex: 1 1 88px;
+    padding: 0 10px;
+  }
+
+  .bid-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .brand {
+    padding: 28px;
+  }
+
+  .brand h1 {
+    font-size: 3rem;
+  }
+
+  .deck-mark span {
+    width: 39px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar button {
+    width: 100%;
+  }
+}
