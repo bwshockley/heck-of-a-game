@@ -1,0 +1,13 @@
+{
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/events",
+      "destination": "/api/index"
+    }
+  ]
+}

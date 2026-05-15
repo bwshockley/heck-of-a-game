@@ -12,6 +12,13 @@ const ROOM_TTL_MS = 1000 * 60 * 60 * 8;
 const MAX_PLAYERS = 8;
 
 const rooms = new Map();
+let roomsLoaded = false;
+
+function ensureRoomsLoaded() {
+  if (roomsLoaded) return;
+  loadRooms();
+  roomsLoaded = true;
+}
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -712,14 +719,9 @@ function handleEvents(req, res) {
 }
 
 function startServer() {
-  loadRooms();
+  ensureRoomsLoaded();
 
-  const server = http.createServer((req, res) => {
-    removeExpiredRooms();
-    if (req.url.startsWith("/events")) return handleEvents(req, res);
-    if (req.url.startsWith("/api/")) return handleApi(req, res);
-    return serveStatic(req, res);
-  });
+  const server = http.createServer(handleRequest);
 
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Heck of a Game running at http://localhost:${PORT}`);
@@ -736,6 +738,14 @@ function startServer() {
   return server;
 }
 
+function handleRequest(req, res) {
+  ensureRoomsLoaded();
+  removeExpiredRooms();
+  if (req.url.startsWith("/events")) return handleEvents(req, res);
+  if (req.url.startsWith("/api/")) return handleApi(req, res);
+  return serveStatic(req, res);
+}
+
 if (require.main === module) {
   startServer();
 }
@@ -743,6 +753,7 @@ if (require.main === module) {
 module.exports = {
   canPlayCard,
   createRoom,
+  handleRequest,
   playCard,
   startRound
 };
