@@ -5,7 +5,8 @@ const state = {
   snapshot: null,
   lastTrickKey: "",
   lastRoundSummaryKey: "",
-  modalTimer: null
+  modalTimer: null,
+  pendingBid: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -24,8 +25,7 @@ const elements = {
   copyLink: $("#copyLink"),
   turnLabel: $("#turnLabel"),
   turnName: $("#turnName"),
-  topSuit: $("#topSuit"),
-  playerCount: $("#playerCount"),
+  topCardLabel: $("#topCardLabel"),
   tableHint: $("#tableHint"),
   topCard: $("#topCard"),
   tableCards: $("#tableCards"),
@@ -34,8 +34,12 @@ const elements = {
   log: $("#log"),
   startGame: $("#startGame"),
   resetGame: $("#resetGame"),
-  bidForm: $("#bidForm"),
-  bidAmount: $("#bidAmount"),
+  clearMemory: $("#clearMemory"),
+  bidPanel: $("#bidPanel"),
+  bidConfirmModal: $("#bidConfirmModal"),
+  bidConfirmTitle: $("#bidConfirmTitle"),
+  confirmBid: $("#confirmBid"),
+  cancelBid: $("#cancelBid"),
   trickModal: $("#trickModal"),
   modalEyebrow: $("#modalEyebrow"),
   modalTitle: $("#modalTitle"),
@@ -126,6 +130,7 @@ function clearSession() {
   state.lastTrickKey = "";
   state.lastRoundSummaryKey = "";
   hideModal();
+  hideBidConfirm();
   localStorage.removeItem("heck.roomCode");
   localStorage.removeItem("heck.playerId");
 }
@@ -287,6 +292,14 @@ function canPlay(card) {
   return !snapshot.me.hand.some(candidate => candidate.suit === leadSuit);
 }
 
+function currentWinningCardId(room) {
+  if (!room.topCard || room.currentTrick.length < 2) return "";
+  const topSuit = room.topCard.suit;
+  const topCards = room.currentTrick.filter(card => card.suit === topSuit);
+  const candidates = topCards.length ? topCards : room.currentTrick.filter(card => card.suit === room.currentTrick[0].suit);
+  return candidates.reduce((best, card) => (card.value > best.value ? card : best), candidates[0]).id;
+}
+
 function phaseLabel(phase) {
   return {
     lobby: "Waiting",
@@ -299,7 +312,7 @@ function phaseLabel(phase) {
 
 function cardNode(card, options = {}) {
   const node = document.createElement(options.asButton ? "button" : "div");
-  node.className = `card ${card.color === "red" ? "red" : ""} ${options.playable ? "playable" : ""}`;
+  node.className = `card ${card.color === "red" ? "red" : ""} ${options.playable ? "playable" : ""} ${options.winning ? "winning" : ""}`;
   node.setAttribute("aria-label", card.label);
   node.innerHTML = `
     <span class="rank">${escapeHtml(card.rank)}</span>
@@ -326,7 +339,8 @@ function renderCards(container, cards, emptyMessage, options = {}) {
   for (const card of cards) {
     const enabled = Boolean(options.playable);
     const playable = enabled ? canPlay(card) : false;
-    container.append(cardNode(card, { ...options, enabled, playable }));
+    const winning = card.id === options.winningCardId;
+    container.append(cardNode(card, { ...options, enabled, playable, winning }));
   }
 }
 
@@ -334,14 +348,12 @@ function renderTop(room) {
   elements.topCard.innerHTML = "";
   if (!room.topCard) {
     elements.topCard.classList.add("hidden");
-    elements.topSuit.textContent = "--";
+    elements.topCardLabel.textContent = "Top Card - Top Suit";
     return;
   }
   elements.topCard.classList.remove("hidden");
-  elements.topSuit.textContent = room.topCard.suit;
-  const label = document.createElement("span");
-  label.textContent = `Top Card - Top Suit ${room.topCard.suit}`;
-  elements.topCard.append(label, cardNode(room.topCard));
+  elements.topCardLabel.textContent = `Top Card - Top Suit ${room.topCard.suit}`;
+  elements.topCard.append(cardNode(room.topCard));
 }
 
 function renderPlayers(room) {
@@ -390,15 +402,51 @@ function renderLog(room) {
   }
 }
 
-function renderBidForm(room) {
+function showBidConfirm(amount) {
+  state.pendingBid = amount;
+  elements.bidConfirmTitle.textContent = `Bid ${amount}?`;
+  elements.bidConfirmModal.classList.remove("hidden");
+  elements.confirmBid.focus();
+}
+
+function hideBidConfirm() {
+  state.pendingBid = null;
+  elements.bidConfirmModal.classList.add("hidden");
+}
+
+function clearBrowserMemory() {
+  if (!isHost()) return;
+  if (state.source) {
+    state.source.close();
+    state.source = null;
+  }
+  clearSession();
+  history.replaceState(null, "", location.pathname);
+  elements.game.classList.add("hidden");
+  elements.welcome.classList.remove("hidden");
+  showDefaultWelcome();
+  elements.roomCode.value = "";
+  elements.hostName.focus();
+  toast("Browser memory cleared.");
+}
+
+function renderBidPanel(room) {
   const show = room.phase === "bidding" && isMyTurn();
-  elements.bidForm.classList.toggle("hidden", !show);
-  elements.bidAmount.max = room.handSize || 7;
-  if (show) {
-    const currentValue = Number(elements.bidAmount.value);
-    if (!Number.isInteger(currentValue) || currentValue > room.handSize) {
-      elements.bidAmount.value = "0";
-    }
+  elements.bidPanel.classList.toggle("hidden", !show);
+  elements.bidPanel.innerHTML = "";
+  if (!show) {
+    hideBidConfirm();
+    return;
+  }
+
+  const maxBid = Math.min(7, Math.max(0, room.handSize || 0));
+  for (let amount = 0; amount <= maxBid; amount += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "bid-choice";
+    button.textContent = amount;
+    button.addEventListener("click", () => showBidConfirm(amount));
+    elements.bidPanel.append(button);
   }
 }
 
@@ -413,7 +461,6 @@ function render() {
   elements.roomTitle.textContent = room.code;
   elements.turnLabel.textContent = myTurn ? "Your turn" : phaseLabel(room.phase);
   elements.turnName.textContent = current ? current.name : "for players";
-  elements.playerCount.textContent = room.players.length;
 
   if (room.phase === "lobby") {
     elements.tableHint.textContent = "Share the room code or link, then the host deals.";
@@ -431,22 +478,26 @@ function render() {
   }
 
   renderTop(room);
-  renderCards(elements.tableCards, room.currentTrick, "No cards in this trick yet.");
+  renderCards(elements.tableCards, room.currentTrick, "No cards in this trick yet.", {
+    winningCardId: currentWinningCardId(room)
+  });
   renderCards(elements.hand, me.hand, room.phase === "lobby" ? "Cards appear when the host deals." : "No cards in hand.", {
     asButton: true,
     playable: room.phase === "playing" && myTurn
   });
   renderPlayers(room);
   renderLog(room);
-  renderBidForm(room);
+  renderBidPanel(room);
   maybeShowTrickWinner(room);
   maybeShowRoundSummary(room);
 
   elements.startGame.textContent = room.phase === "roundOver" ? "Next Round" : room.phase === "gameOver" ? "New Game" : "Deal";
   elements.startGame.classList.toggle("hidden", !host);
   elements.resetGame.classList.toggle("hidden", !host);
+  elements.clearMemory.classList.toggle("hidden", !host);
   elements.startGame.disabled = !host || !["lobby", "roundOver", "gameOver"].includes(room.phase) || room.players.length < 2;
   elements.resetGame.disabled = !host;
+  elements.clearMemory.disabled = !host;
 }
 
 async function act(action, extra = {}) {
@@ -489,10 +540,14 @@ elements.joinForm.addEventListener("submit", async event => {
   }
 });
 
-elements.bidForm.addEventListener("submit", event => {
-  event.preventDefault();
-  act("bid", { bid: Number(elements.bidAmount.value) });
+elements.confirmBid.addEventListener("click", () => {
+  if (state.pendingBid === null) return;
+  const bid = state.pendingBid;
+  hideBidConfirm();
+  act("bid", { bid });
 });
+
+elements.cancelBid.addEventListener("click", hideBidConfirm);
 
 elements.copyLink.addEventListener("click", async () => {
   const url = `${location.origin}${location.pathname}?room=${state.roomCode}`;
@@ -506,6 +561,7 @@ elements.copyLink.addEventListener("click", async () => {
 
 elements.startGame.addEventListener("click", () => act("start"));
 elements.resetGame.addEventListener("click", () => act("reset"));
+elements.clearMemory.addEventListener("click", clearBrowserMemory);
 
 elements.startOwn.addEventListener("click", () => {
   showDefaultWelcome();

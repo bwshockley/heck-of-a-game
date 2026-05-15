@@ -42,36 +42,23 @@
       </section>
 
       <section id="game" class="game hidden" aria-live="polite">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Room</p>
-            <h1 id="roomTitle">-----</h1>
-          </div>
-          <button id="copyLink" type="button" class="secondary">Copy Link</button>
-        </header>
-
-        <section class="status-strip">
-          <div>
-            <span id="turnLabel">Waiting</span>
-            <strong id="turnName">for players</strong>
-          </div>
-          <div>
-            <span>Top</span>
-            <strong id="topSuit">--</strong>
-          </div>
-          <div>
-            <span>Players</span>
-            <strong id="playerCount">1</strong>
-          </div>
-        </section>
-
         <section class="table-zone">
           <div class="table-header">
-            <h2>Table</h2>
-            <p id="tableHint">Start when everyone is in.</p>
+            <div class="room-block">
+              <p class="room-code">Room <strong id="roomTitle">-----</strong></p>
+              <button id="copyLink" type="button" class="secondary table-copy">Copy Link</button>
+            </div>
+            <div class="top-card-block">
+              <h2 id="topCardLabel">Top Card - Top Suit</h2>
+              <div id="topCard" class="top-card"></div>
+            </div>
           </div>
-          <div id="topCard" class="top-card"></div>
           <div id="tableCards" class="table-cards"></div>
+          <div class="turn-panel">
+            <span id="turnLabel">Waiting</span>
+            <strong id="turnName">for players</strong>
+            <p id="tableHint" class="table-hint">Start when everyone is in.</p>
+          </div>
         </section>
 
         <section class="players-zone">
@@ -85,15 +72,10 @@
             <div class="actions">
               <button id="startGame" type="button">Deal</button>
               <button id="resetGame" type="button" class="secondary">Reset</button>
+              <button id="clearMemory" type="button" class="secondary">Clear Memory</button>
             </div>
           </div>
-          <form id="bidForm" class="bid-form hidden">
-            <label>
-              Your bid
-              <input id="bidAmount" type="number" min="0" inputmode="numeric" value="0">
-            </label>
-            <button type="submit">Bid</button>
-          </form>
+          <div id="bidPanel" class="bid-panel hidden"></div>
           <div id="hand" class="hand"></div>
         </section>
 
@@ -109,6 +91,15 @@
         <span id="modalEyebrow">Trick won by</span>
         <strong id="modalTitle">Player</strong>
         <div id="roundSummary" class="round-summary hidden"></div>
+      </div>
+    </div>
+    <div id="bidConfirmModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bidConfirmTitle">
+      <div class="confirm-modal-panel">
+        <h2 id="bidConfirmTitle">Bid 0?</h2>
+        <div class="confirm-actions">
+          <button id="confirmBid" type="button">Bid</button>
+          <button id="cancelBid" type="button" class="secondary">Cancel</button>
+        </div>
       </div>
     </div>
     <div id="toast" class="toast" role="status"></div>

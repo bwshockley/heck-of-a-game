@@ -208,8 +208,6 @@ label {
   gap: 14px;
 }
 
-.topbar,
-.status-strip,
 .table-zone,
 .players-zone,
 .hand-zone,
@@ -218,55 +216,6 @@ label {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 32px rgba(22, 31, 39, 0.08);
-}
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-}
-
-.eyebrow {
-  margin: 0 0 2px;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 2rem;
-  letter-spacing: 0;
-}
-
-.status-strip {
-  display: grid;
-  grid-template-columns: 1fr 0.45fr 0.45fr;
-  gap: 1px;
-  overflow: hidden;
-}
-
-.status-strip > div {
-  display: grid;
-  gap: 4px;
-  padding: 15px;
-  background: white;
-}
-
-.status-strip span {
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.status-strip strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-size: 1.1rem;
 }
 
 .table-zone {
@@ -286,10 +235,71 @@ label {
   gap: 12px;
 }
 
-.table-header p {
+.table-header {
+  align-items: flex-start;
+}
+
+.table-hint {
   margin: 0;
   color: rgba(255, 255, 255, 0.78);
   font-size: 0.9rem;
+}
+
+.table-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.room-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.room-code {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.2rem;
+  font-weight: 850;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.room-code strong {
+  color: white;
+  font-size: 1.5rem;
+}
+
+.table-copy {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.top-card-block {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  text-align: right;
+}
+
+.turn-panel {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.turn-panel span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.turn-panel strong {
+  overflow-wrap: anywhere;
+  font-size: 1.1rem;
 }
 
 .table-cards {
@@ -303,22 +313,12 @@ label {
 }
 
 .top-card {
-  display: grid;
-  justify-items: center;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: 18px;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 0.78rem;
-  font-weight: 850;
-  text-transform: uppercase;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .top-card .card {
   width: 60px;
-  transform: rotate(90deg);
-  text-transform: none;
 }
 
 .card {
@@ -339,6 +339,12 @@ label {
 
 .card.red {
   color: var(--red);
+}
+
+.table-cards .card.winning {
+  border-color: var(--gold);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(216, 155, 43, 0.34);
+  transform: translateY(-12px);
 }
 
 .card .rank {
@@ -424,16 +430,21 @@ label {
   gap: 8px;
 }
 
-.bid-form {
+.bid-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 10px;
-  align-items: end;
   margin-top: 14px;
   padding: 12px;
   border: 1px solid rgba(216, 155, 43, 0.45);
   border-radius: 8px;
   background: #fff8e8;
+}
+
+.bid-choice {
+  min-height: 64px;
+  padding: 0;
+  font-size: 1.5rem;
 }
 
 .hand {
@@ -510,6 +521,39 @@ label {
   pointer-events: none;
 }
 
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(30, 35, 41, 0.34);
+}
+
+.confirm-modal-panel {
+  width: min(320px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.confirm-modal-panel h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .trick-modal-panel {
   width: min(560px, 100%);
   border: 1px solid rgba(216, 155, 43, 0.5);
@@ -584,14 +628,6 @@ label {
     min-height: 360px;
   }
 
-  .status-strip {
-    grid-template-columns: 1fr 0.5fr;
-  }
-
-  .status-strip > div:first-child {
-    grid-column: 1 / -1;
-  }
-
   .table-header,
   .hand-header {
     align-items: flex-start;
@@ -608,8 +644,8 @@ label {
     padding: 0 10px;
   }
 
-  .bid-form {
-    grid-template-columns: 1fr;
+  .bid-panel {
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   }
 }
 
@@ -630,13 +666,7 @@ label {
   .deck-mark span {
     width: 39px;
   }
-
-  .topbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .topbar button {
+  .table-copy {
     width: 100%;
   }
 }
