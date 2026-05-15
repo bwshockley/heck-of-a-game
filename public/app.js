@@ -2,7 +2,10 @@ const state = {
   roomCode: localStorage.getItem("heck.roomCode") || "",
   playerId: localStorage.getItem("heck.playerId") || "",
   source: null,
-  snapshot: null
+  snapshot: null,
+  lastTrickKey: "",
+  lastRoundSummaryKey: "",
+  modalTimer: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -33,6 +36,10 @@ const elements = {
   resetGame: $("#resetGame"),
   bidForm: $("#bidForm"),
   bidAmount: $("#bidAmount"),
+  trickModal: $("#trickModal"),
+  modalEyebrow: $("#modalEyebrow"),
+  modalTitle: $("#modalTitle"),
+  roundSummary: $("#roundSummary"),
   toast: $("#toast")
 };
 
@@ -62,6 +69,22 @@ function toast(message) {
 
 function hostNameFor(room) {
   return room.players.find(player => player.id === room.hostId)?.name || "the host";
+}
+
+function latestTrick(room) {
+  return room.completedTricks[room.completedTricks.length - 1] || null;
+}
+
+function trickKey(trick) {
+  if (!trick) return "";
+  const firstCard = trick.cards[0];
+  const lastCard = trick.cards[trick.cards.length - 1];
+  return `${trick.winnerId}:${firstCard?.playedAt || ""}:${lastCard?.playedAt || ""}:${trick.cards.length}`;
+}
+
+function roundSummaryKey(room) {
+  if (room.phase !== "roundOver" && room.phase !== "gameOver") return "";
+  return `${room.round}:${room.phase}:${room.players.map(player => `${player.id}:${player.roundScore}:${player.totalScore}`).join("|")}`;
 }
 
 function showInviteJoin(roomCode, hostName) {
@@ -100,6 +123,9 @@ function clearSession() {
   state.snapshot = null;
   state.roomCode = "";
   state.playerId = "";
+  state.lastTrickKey = "";
+  state.lastRoundSummaryKey = "";
+  hideModal();
   localStorage.removeItem("heck.roomCode");
   localStorage.removeItem("heck.playerId");
 }
@@ -134,10 +160,77 @@ function connectEvents() {
 
 function enterGame(snapshot) {
   saveSession(snapshot);
+  state.lastTrickKey = trickKey(latestTrick(snapshot.room));
+  state.lastRoundSummaryKey = roundSummaryKey(snapshot.room);
   elements.welcome.classList.add("hidden");
   elements.game.classList.remove("hidden");
   connectEvents();
   render();
+}
+
+function showTrickModal(trick) {
+  if (!trick) return;
+  elements.modalEyebrow.textContent = "Trick won by";
+  elements.modalTitle.textContent = trick.winnerName;
+  elements.roundSummary.classList.add("hidden");
+  elements.roundSummary.innerHTML = "";
+  elements.trickModal.classList.remove("hidden");
+  clearTimeout(state.modalTimer);
+  state.modalTimer = setTimeout(hideModal, 3000);
+}
+
+function hideModal() {
+  clearTimeout(state.modalTimer);
+  state.modalTimer = null;
+  elements.trickModal.classList.add("hidden");
+}
+
+function maybeShowTrickWinner(room) {
+  const trick = latestTrick(room);
+  const key = trickKey(trick);
+  if (!key || key === state.lastTrickKey) return;
+  state.lastTrickKey = key;
+  showTrickModal(trick);
+}
+
+function showRoundSummary(room) {
+  elements.modalEyebrow.textContent = room.phase === "gameOver" ? "Final scores" : `Round ${room.round} complete`;
+  elements.modalTitle.textContent = room.phase === "gameOver" ? "Game Over" : "Round Summary";
+  elements.roundSummary.classList.remove("hidden");
+  elements.roundSummary.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Bid</th>
+          <th>Tricks</th>
+          <th>Round</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${room.players.map(player => `
+          <tr>
+            <td>${escapeHtml(player.name)}</td>
+            <td>${player.bid ?? "--"}</td>
+            <td>${player.tricksTaken}</td>
+            <td>${player.roundScore > 0 ? "+" : ""}${player.roundScore}</td>
+            <td>${player.totalScore}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  elements.trickModal.classList.remove("hidden");
+  clearTimeout(state.modalTimer);
+  state.modalTimer = setTimeout(hideModal, 8000);
+}
+
+function maybeShowRoundSummary(room) {
+  const key = roundSummaryKey(room);
+  if (!key || key === state.lastRoundSummaryKey) return;
+  state.lastRoundSummaryKey = key;
+  showRoundSummary(room);
 }
 
 async function resumeSession() {
@@ -346,6 +439,8 @@ function render() {
   renderPlayers(room);
   renderLog(room);
   renderBidForm(room);
+  maybeShowTrickWinner(room);
+  maybeShowRoundSummary(room);
 
   elements.startGame.textContent = room.phase === "roundOver" ? "Next Round" : room.phase === "gameOver" ? "New Game" : "Deal";
   elements.startGame.disabled = !host || !["lobby", "roundOver", "gameOver"].includes(room.phase) || room.players.length < 2;
