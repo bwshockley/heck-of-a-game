@@ -302,19 +302,22 @@ label {
   padding-bottom: 8px;
 }
 
-.trump-card {
-  display: flex;
+.top-card {
+  display: grid;
+  justify-items: center;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: 18px;
   color: rgba(255, 255, 255, 0.84);
   font-size: 0.78rem;
   font-weight: 850;
   text-transform: uppercase;
 }
 
-.trump-card .card {
+.top-card .card {
   width: 60px;
+  transform: rotate(90deg);
   text-transform: none;
 }
 

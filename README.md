@@ -17,13 +17,13 @@ The host can remove players from the table at any time. Removing a player during
 - The host is the first dealer.
 - With 6 or fewer players, round 1 deals 7 cards to each player.
 - Each following round deals one fewer card per player until the final 1-card round.
-- After the deal, one card is turned up to establish trump.
+- After the deal, one card is turned up to establish top.
 - The player to the left of the dealer bids first, then play also starts left of the dealer.
 - Players bid how many tricks they expect to take.
 - The first card in a trick establishes the lead suit.
 - Players must follow the lead suit if they can.
-- The highest lead-suit card wins unless trump is played.
-- Any trump beats any non-trump, and the highest trump wins.
+- The highest lead-suit card wins unless top is played.
+- Any top beats any non-top, and the highest top wins.
 - Exact bid score: `10 + bid`.
 - Missed bid score: `-(10 + bid)`.
 - After the 1-card final round, the highest total score wins.

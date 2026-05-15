@@ -24,10 +24,10 @@ const elements = {
   copyLink: $("#copyLink"),
   turnLabel: $("#turnLabel"),
   turnName: $("#turnName"),
-  trumpSuit: $("#trumpSuit"),
+  topSuit: $("#topSuit"),
   playerCount: $("#playerCount"),
   tableHint: $("#tableHint"),
-  trumpCard: $("#trumpCard"),
+  topCard: $("#topCard"),
   tableCards: $("#tableCards"),
   players: $("#players"),
   hand: $("#hand"),
@@ -330,18 +330,18 @@ function renderCards(container, cards, emptyMessage, options = {}) {
   }
 }
 
-function renderTrump(room) {
-  elements.trumpCard.innerHTML = "";
-  if (!room.trumpCard) {
-    elements.trumpCard.classList.add("hidden");
-    elements.trumpSuit.textContent = "--";
+function renderTop(room) {
+  elements.topCard.innerHTML = "";
+  if (!room.topCard) {
+    elements.topCard.classList.add("hidden");
+    elements.topSuit.textContent = "--";
     return;
   }
-  elements.trumpCard.classList.remove("hidden");
-  elements.trumpSuit.textContent = room.trumpCard.suit;
+  elements.topCard.classList.remove("hidden");
+  elements.topSuit.textContent = room.topCard.suit;
   const label = document.createElement("span");
-  label.textContent = "Trump";
-  elements.trumpCard.append(label, cardNode(room.trumpCard));
+  label.textContent = `Top Card - Top Suit ${room.topCard.suit}`;
+  elements.topCard.append(label, cardNode(room.topCard));
 }
 
 function renderPlayers(room) {
@@ -430,7 +430,7 @@ function render() {
     elements.tableHint.textContent = `${winners || "The highest score"} wins Heck of a Game.`;
   }
 
-  renderTrump(room);
+  renderTop(room);
   renderCards(elements.tableCards, room.currentTrick, "No cards in this trick yet.");
   renderCards(elements.hand, me.hand, room.phase === "lobby" ? "Cards appear when the host deals." : "No cards in hand.", {
     asButton: true,
@@ -443,6 +443,8 @@ function render() {
   maybeShowRoundSummary(room);
 
   elements.startGame.textContent = room.phase === "roundOver" ? "Next Round" : room.phase === "gameOver" ? "New Game" : "Deal";
+  elements.startGame.classList.toggle("hidden", !host);
+  elements.resetGame.classList.toggle("hidden", !host);
   elements.startGame.disabled = !host || !["lobby", "roundOver", "gameOver"].includes(room.phase) || room.players.length < 2;
   elements.resetGame.disabled = !host;
 }

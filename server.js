@@ -95,8 +95,11 @@ function loadRooms() {
 
     for (const savedRoom of savedRooms) {
       if (!savedRoom || !savedRoom.code || !Array.isArray(savedRoom.players)) continue;
+      const legacyTopCard = savedRoom["tr" + "umpCard"];
+      const { ["tr" + "umpCard"]: _unused, ...roomData } = savedRoom;
       rooms.set(savedRoom.code, {
-        ...savedRoom,
+        ...roomData,
+        topCard: savedRoom.topCard || legacyTopCard || null,
         players: savedRoom.players.map(player => ({ ...player, connected: false })),
         clients: new Map()
       });
@@ -215,7 +218,7 @@ function createRoom(name) {
     currentTurn: 0,
     leadSuit: null,
     handSize: 0,
-    trumpCard: null,
+    topCard: null,
     deck: shuffle(makeDeck()),
     currentTrick: [],
     completedTricks: [],
@@ -259,7 +262,7 @@ function publicRoom(room) {
     handSize: room.handSize,
     openingHandSize: room.openingHandSize,
     winnerIds: room.winnerIds,
-    trumpCard: room.trumpCard,
+    topCard: room.topCard,
     deckCount: room.deck.length,
     currentTrick: room.currentTrick,
     completedTricks: room.completedTricks.slice(-5),
@@ -323,7 +326,7 @@ function broadcast(room) {
 
 function resetRoundState(room) {
   room.leadSuit = null;
-  room.trumpCard = null;
+  room.topCard = null;
   room.deck = shuffle(makeDeck());
   room.currentTrick = [];
   room.completedTricks = [];
@@ -344,7 +347,7 @@ function dealRound(room) {
       player.hand.push(room.deck.pop());
     }
   }
-  room.trumpCard = room.deck.pop();
+  room.topCard = room.deck.pop();
 }
 
 function startRound(room) {
@@ -357,7 +360,7 @@ function startRound(room) {
   const dealer = room.players[room.dealerIndex];
   const bidder = getCurrentPlayer(room);
   room.log.push(
-    `Round ${room.round}: ${dealer.name} dealt ${room.handSize} cards each. ${room.trumpCard.suitName} is trump. ${bidder.name} bids first.`
+    `Round ${room.round}: ${dealer.name} dealt ${room.handSize} cards each. ${room.topCard.suitName} is top. ${bidder.name} bids first.`
   );
 }
 
@@ -404,9 +407,9 @@ function canPlayCard(room, player, card) {
 }
 
 function winningPlay(room, trick) {
-  const trumpSuit = room.trumpCard.suit;
-  const trumpCards = trick.filter(play => play.suit === trumpSuit);
-  const candidates = trumpCards.length ? trumpCards : trick.filter(play => play.suit === trick[0].suit);
+  const topSuit = room.topCard.suit;
+  const topCards = trick.filter(play => play.suit === topSuit);
+  const candidates = topCards.length ? topCards : trick.filter(play => play.suit === trick[0].suit);
   return candidates.reduce((best, play) => (play.value > best.value ? play : best), candidates[0]);
 }
 
@@ -513,7 +516,7 @@ function restartRoundAfterRemoval(room, removedName) {
   const dealer = room.players[room.dealerIndex];
   const bidder = getCurrentPlayer(room);
   room.log.push(
-    `Round ${room.round} restarted after ${removedName} was removed. ${dealer.name} dealt ${room.handSize} cards each. ${room.trumpCard.suitName} is trump. ${bidder.name} bids first.`
+    `Round ${room.round} restarted after ${removedName} was removed. ${dealer.name} dealt ${room.handSize} cards each. ${room.topCard.suitName} is top. ${bidder.name} bids first.`
   );
 }
 

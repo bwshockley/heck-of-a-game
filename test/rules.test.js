@@ -20,7 +20,7 @@ function roomWithFollowerHand(hand) {
     phase: "playing",
     currentTurn: 1,
     leadSuit: "♥",
-    trumpCard: card("9♣", "♣"),
+    topCard: card("9♣", "♣"),
     currentTrick: [{
       ...card("A♥", "♥"),
       playerId: "leader",
