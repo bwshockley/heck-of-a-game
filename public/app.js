@@ -12,9 +12,11 @@ const elements = {
   game: $("#game"),
   createForm: $("#createForm"),
   joinForm: $("#joinForm"),
+  joinTitle: $("#joinTitle"),
   hostName: $("#hostName"),
   joinName: $("#joinName"),
   roomCode: $("#roomCode"),
+  startOwn: $("#startOwn"),
   roomTitle: $("#roomTitle"),
   copyLink: $("#copyLink"),
   turnLabel: $("#turnLabel"),
@@ -35,9 +37,7 @@ const elements = {
 };
 
 const params = new URLSearchParams(location.search);
-if (params.get("room")) {
-  elements.roomCode.value = normalizeRoomCode(params.get("room"));
-}
+const linkedRoomCode = normalizeRoomCode(params.get("room"));
 
 function normalizeRoomCode(code) {
   return String(code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
@@ -60,6 +60,24 @@ function toast(message) {
   toast.timer = setTimeout(() => elements.toast.classList.remove("show"), 2400);
 }
 
+function hostNameFor(room) {
+  return room.players.find(player => player.id === room.hostId)?.name || "the host";
+}
+
+function showInviteJoin(roomCode, hostName) {
+  elements.createForm.classList.add("hidden");
+  elements.startOwn.classList.remove("hidden");
+  elements.roomCode.value = roomCode;
+  elements.joinTitle.textContent = `Join the table started by ${hostName}`;
+}
+
+function showDefaultWelcome() {
+  elements.createForm.classList.remove("hidden");
+  elements.startOwn.classList.add("hidden");
+  elements.joinTitle.textContent = "Join a Table";
+  if (linkedRoomCode) history.replaceState(null, "", location.pathname);
+}
+
 async function request(url, payload) {
   const response = await fetch(url, {
     method: "POST",
@@ -69,6 +87,21 @@ async function request(url, payload) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Something went wrong");
   return data;
+}
+
+async function getJson(url) {
+  const response = await fetch(url);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Something went wrong");
+  return data;
+}
+
+function clearSession() {
+  state.snapshot = null;
+  state.roomCode = "";
+  state.playerId = "";
+  localStorage.removeItem("heck.roomCode");
+  localStorage.removeItem("heck.playerId");
 }
 
 function saveSession(snapshot) {
@@ -89,11 +122,7 @@ function connectEvents() {
   state.source.addEventListener("removed", event => {
     const data = JSON.parse(event.data);
     state.source.close();
-    state.snapshot = null;
-    state.roomCode = "";
-    state.playerId = "";
-    localStorage.removeItem("heck.roomCode");
-    localStorage.removeItem("heck.playerId");
+    clearSession();
     elements.game.classList.add("hidden");
     elements.welcome.classList.remove("hidden");
     toast(data.message || "You were removed from the table.");
@@ -109,6 +138,36 @@ function enterGame(snapshot) {
   elements.game.classList.remove("hidden");
   connectEvents();
   render();
+}
+
+async function resumeSession() {
+  const savedRoomCode = normalizeRoomCode(state.roomCode);
+  const savedPlayerId = state.playerId;
+  if (!savedRoomCode || !savedPlayerId) return;
+  if (linkedRoomCode && linkedRoomCode !== savedRoomCode) return;
+
+  try {
+    const snapshot = await getJson(`/api/rooms/${savedRoomCode}?player=${encodeURIComponent(savedPlayerId)}`);
+    history.replaceState(null, "", `?room=${snapshot.room.code}`);
+    enterGame(snapshot);
+    toast("Reconnected to your table.");
+  } catch {
+    clearSession();
+  }
+}
+
+async function loadInviteRoom() {
+  if (!linkedRoomCode) return;
+  showInviteJoin(linkedRoomCode, "the host");
+
+  try {
+    const snapshot = await getJson(`/api/rooms/${linkedRoomCode}`);
+    showInviteJoin(snapshot.room.code, hostNameFor(snapshot.room));
+  } catch (error) {
+    showDefaultWelcome();
+    elements.roomCode.value = linkedRoomCode;
+    toast(error.message);
+  }
 }
 
 function currentPlayer(room) {
@@ -156,7 +215,7 @@ function cardNode(card, options = {}) {
   `;
   if (options.asButton) {
     node.type = "button";
-    node.disabled = !options.playable;
+    node.disabled = !options.enabled;
     node.addEventListener("click", () => act("play", { cardId: card.id }));
   }
   return node;
@@ -172,8 +231,9 @@ function renderCards(container, cards, emptyMessage, options = {}) {
     return;
   }
   for (const card of cards) {
-    const playable = options.playable ? canPlay(card) : false;
-    container.append(cardNode(card, { ...options, playable }));
+    const enabled = Boolean(options.playable);
+    const playable = enabled ? canPlay(card) : false;
+    container.append(cardNode(card, { ...options, enabled, playable }));
   }
 }
 
@@ -350,6 +410,15 @@ elements.copyLink.addEventListener("click", async () => {
 elements.startGame.addEventListener("click", () => act("start"));
 elements.resetGame.addEventListener("click", () => act("reset"));
 
+elements.startOwn.addEventListener("click", () => {
+  showDefaultWelcome();
+  elements.roomCode.value = "";
+  elements.hostName.focus();
+});
+
 elements.roomCode.addEventListener("input", () => {
   elements.roomCode.value = normalizeRoomCode(elements.roomCode.value);
 });
+
+loadInviteRoom();
+resumeSession();

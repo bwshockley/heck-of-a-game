@@ -69,6 +69,18 @@ button.small {
   font-size: 0.82rem;
 }
 
+button.link-button {
+  min-height: auto;
+  justify-self: center;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--felt-dark);
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
 input {
   width: 100%;
   min-height: 46px;

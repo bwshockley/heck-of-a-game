@@ -560,6 +560,21 @@ function removePlayer(room, host, targetPlayerId) {
 
 async function handleApi(req, res) {
   try {
+    const roomViewMatch = req.url.match(/^\/api\/rooms\/([^/?]+)(?:\?.*)?$/);
+    if (req.method === "GET" && roomViewMatch) {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const room = findRoom(roomViewMatch[1]);
+      if (!room) return sendJson(res, 404, { error: "Room not found" });
+      const playerId = url.searchParams.get("player");
+      if (!playerId) {
+        sendJson(res, 200, { room: publicRoom(room), me: null });
+        return;
+      }
+      if (!findPlayer(room, playerId)) return sendJson(res, 403, { error: "Player not found" });
+      sendJson(res, 200, playerView(room, playerId));
+      return;
+    }
+
     if (req.method === "POST" && req.url === "/api/rooms") {
       const body = await readBody(req);
       const { room, player } = createRoom(body.name);
@@ -696,23 +711,38 @@ function handleEvents(req, res) {
   });
 }
 
-loadRooms();
+function startServer() {
+  loadRooms();
 
-const server = http.createServer((req, res) => {
-  removeExpiredRooms();
-  if (req.url.startsWith("/events")) return handleEvents(req, res);
-  if (req.url.startsWith("/api/")) return handleApi(req, res);
-  return serveStatic(req, res);
-});
+  const server = http.createServer((req, res) => {
+    removeExpiredRooms();
+    if (req.url.startsWith("/events")) return handleEvents(req, res);
+    if (req.url.startsWith("/api/")) return handleApi(req, res);
+    return serveStatic(req, res);
+  });
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Heck of a Game running at http://localhost:${PORT}`);
-});
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`Heck of a Game running at http://localhost:${PORT}`);
+  });
 
-setInterval(() => {
-  for (const room of rooms.values()) {
-    for (const client of room.clients.values()) {
-      client.res.write(": heartbeat\n\n");
+  setInterval(() => {
+    for (const room of rooms.values()) {
+      for (const client of room.clients.values()) {
+        client.res.write(": heartbeat\n\n");
+      }
     }
-  }
-}, HEARTBEAT_MS);
+  }, HEARTBEAT_MS);
+
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = {
+  canPlayCard,
+  createRoom,
+  playCard,
+  startRound
+};

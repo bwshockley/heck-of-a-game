@@ -5,7 +5,8 @@
   "description": "No-login multiplayer trick-taking cellphone card game using a standard 52-card deck.",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
